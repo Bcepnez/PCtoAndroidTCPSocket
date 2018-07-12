@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
@@ -33,6 +34,7 @@ public class testWin extends javax.swing.JFrame{
 	private static JTextArea textArea;
 	private JTextField txtSendback;
 	private static JTextArea connectStatus;
+	static boolean status = true;
 	/**
 	 * Launch the application.
 	 */
@@ -50,10 +52,8 @@ public class testWin extends javax.swing.JFrame{
 		});
 		try {
 			ss = new ServerSocket(7800);
-//			s = new Socket("127.0.0.1", 7800);
-			s = ss.accept();
-			System.out.println(s);
 			while (true) {
+				s = ss.accept();
 				isr = new InputStreamReader(s.getInputStream());
 				br = new BufferedReader(isr);
 				message = br.readLine();
@@ -67,14 +67,11 @@ public class testWin extends javax.swing.JFrame{
 				}
 				s.close();
 			}
+//			ss.close();
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
 	}
-
-	/**
-	 * Create the application.
-	 */
 	public testWin() {
 		initialize();
 	}
@@ -98,56 +95,78 @@ public class testWin extends javax.swing.JFrame{
 	}
 	private static boolean TCPconnection(){
 		try {
-			Process p = Runtime.getRuntime().exec("C:\\Users\\BenzRST\\Desktop\\adb.exe forward tcp:7801 tcp:8000");
-//			Process p = Runtime.getRuntime().exec("..\\adb.exe forward tcp:7801 tcp:8000");
+			Process p1 = Runtime.getRuntime().exec("C:\\Users\\BenzRST\\Desktop\\ADB36\\adb.exe reverse tcp:8005 tcp:7800");
+			Scanner sc1 = new Scanner(p1.getErrorStream());
+			Process p = Runtime.getRuntime().exec("C:\\Users\\BenzRST\\Desktop\\ADB36\\adb.exe forward tcp:7801 tcp:8000");
 			Scanner sc = new Scanner(p.getErrorStream());
+			
 			if (sc.hasNext()) {
+				sc.close();
+				sc1.close();
 				return false;
 			}
+			else if (sc1.hasNext()) {
+				sc.close();
+				sc1.close();
+				return false;
+			}
+			sc.close();
+			sc1.close();
 			return true;
 		} catch (Exception e) {
 			return false;
 		}
 	}
 	static int state = 0;
+	String PCmessage;
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 713, 368);
+		frame.setBounds(100, 100, 818, 383);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		textArea = new JTextArea();
 		connectStatus = new JTextArea();
+		connectStatus.setAutoscrolls(false);
+		connectStatus.setEditable(false);
+		connectStatus.setText("Hi");
+		connectStatus.setLineWrap(true);
 		connectStatus.setFont(new Font("Monospaced", Font.PLAIN, 20));
-		connectStatus.setBackground(new Color(255, 153, 153));
+		connectStatus.setBackground(new Color(255, 255, 153));
 		JScrollPane scrollPane = new JScrollPane();
 		JButton btnSendToAndroid = new JButton("Send to Android");
 		
 		btnSendToAndroid.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				PCmessage = txtSendback.getText();
+				PrintWriter pw;
+				Socket s1;
 				if (state == 1&&TCPconnection()) {
 					try {
-//						source not found
-						Socket s = new Socket("127.0.0.1",7801);
-						PrintWriter pw = new PrintWriter(s.getOutputStream());
-						String PCmessage = txtSendback.getText().trim();
-						if (PCmessage.compareToIgnoreCase("")==0) {
-							PCmessage = " ";
-						}
+						s1 = new Socket("127.0.0.1",7801);
+						pw = new PrintWriter(s1.getOutputStream());
+						pw.write(PCmessage);
+						pw.println("");
+						pw.flush();
 						System.out.println("Message : "+PCmessage);
-						if( textArea.getText().toString().equals("")){
+						if( textArea.getText().equals("")){
 							textArea.setText("PC : "+PCmessage);
 						}
 						else{
 							textArea.setText(textArea.getText()+"\nPC : "+PCmessage);
+						}		
+						txtSendback.setText("");
+						try {
+							TimeUnit.SECONDS.sleep(1);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
 						}
-						pw.write(PCmessage);
-						pw.flush();
 						pw.close();
-						s.close();
-						txtSendback.setText(" ");
+						s1.close();	
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+					
 				}
 				else{
 					DeviceNotFound();
@@ -172,6 +191,13 @@ public class testWin extends javax.swing.JFrame{
 		
 		JLabel lblMessage = new JLabel("Message :");
 		
+		JButton btnNewButton = new JButton("Clear");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				textArea.setText("");
+			}
+		});
+		
 		
 		GroupLayout groupLayout = new GroupLayout(frame.getContentPane());
 		groupLayout.setHorizontalGroup(
@@ -180,39 +206,45 @@ public class testWin extends javax.swing.JFrame{
 					.addContainerGap()
 					.addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
 						.addGroup(groupLayout.createSequentialGroup()
-							.addComponent(connectStatus, GroupLayout.PREFERRED_SIZE, 249, GroupLayout.PREFERRED_SIZE)
+							.addGap(14)
+							.addComponent(connectStatus, GroupLayout.PREFERRED_SIZE, 224, GroupLayout.PREFERRED_SIZE)
 							.addPreferredGap(ComponentPlacement.UNRELATED)
-							.addComponent(btnConnectToDevice, GroupLayout.DEFAULT_SIZE, 138, Short.MAX_VALUE)
-							.addGap(124)
-							.addComponent(btnSendToAndroid, GroupLayout.DEFAULT_SIZE, 138, Short.MAX_VALUE)
+							.addComponent(btnConnectToDevice, GroupLayout.DEFAULT_SIZE, 190, Short.MAX_VALUE)
+							.addPreferredGap(ComponentPlacement.UNRELATED)
+							.addComponent(btnNewButton, GroupLayout.DEFAULT_SIZE, 111, Short.MAX_VALUE)
+							.addGap(13)
+							.addComponent(btnSendToAndroid, GroupLayout.DEFAULT_SIZE, 190, Short.MAX_VALUE)
 							.addGap(22))
 						.addGroup(groupLayout.createSequentialGroup()
 							.addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
-								.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 674, Short.MAX_VALUE)
+								.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 779, Short.MAX_VALUE)
 								.addGroup(groupLayout.createSequentialGroup()
-									.addComponent(lblMessage, GroupLayout.DEFAULT_SIZE, 65, Short.MAX_VALUE)
+									.addComponent(lblMessage, GroupLayout.DEFAULT_SIZE, 99, Short.MAX_VALUE)
 									.addPreferredGap(ComponentPlacement.RELATED)
-									.addComponent(txtSendback, GroupLayout.DEFAULT_SIZE, 604, Short.MAX_VALUE)))
+									.addComponent(txtSendback, GroupLayout.DEFAULT_SIZE, 673, Short.MAX_VALUE)
+									.addPreferredGap(ComponentPlacement.RELATED)))
 							.addGap(9))))
 		);
 		groupLayout.setVerticalGroup(
 			groupLayout.createParallelGroup(Alignment.LEADING)
 				.addGroup(groupLayout.createSequentialGroup()
 					.addContainerGap()
-					.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 155, Short.MAX_VALUE)
+					.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 168, Short.MAX_VALUE)
 					.addGap(18)
-					.addGroup(groupLayout.createParallelGroup(Alignment.TRAILING)
-						.addComponent(txtSendback, GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE)
-						.addComponent(lblMessage, GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE))
+					.addGroup(groupLayout.createParallelGroup(Alignment.BASELINE)
+						.addComponent(lblMessage, GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE)
+						.addComponent(txtSendback, GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE))
 					.addGap(22)
-					.addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
+					.addGroup(groupLayout.createParallelGroup(Alignment.BASELINE)
+						.addComponent(btnSendToAndroid, GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
 						.addGroup(groupLayout.createSequentialGroup()
-							.addGap(4)
-							.addComponent(connectStatus, GroupLayout.DEFAULT_SIZE, 57, Short.MAX_VALUE))
-						.addGroup(groupLayout.createParallelGroup(Alignment.BASELINE)
-							.addComponent(btnSendToAndroid, GroupLayout.DEFAULT_SIZE, 57, Short.MAX_VALUE)
-							.addComponent(btnConnectToDevice, GroupLayout.DEFAULT_SIZE, 59, Short.MAX_VALUE)))
-					.addGap(26))
+							.addGap(1)
+							.addGroup(groupLayout.createParallelGroup(Alignment.BASELINE)
+								.addComponent(btnConnectToDevice, GroupLayout.DEFAULT_SIZE, 59, Short.MAX_VALUE)
+								.addComponent(btnNewButton, GroupLayout.DEFAULT_SIZE, 59, Short.MAX_VALUE)
+								.addComponent(connectStatus, GroupLayout.PREFERRED_SIZE, 44, GroupLayout.PREFERRED_SIZE))
+							.addGap(1)))
+					.addGap(28))
 		);
 		
 //		JTextArea textArea = new JTextArea();
