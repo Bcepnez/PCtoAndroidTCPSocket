@@ -94,10 +94,11 @@ public class testWin extends javax.swing.JFrame{
 		state = 0;
 	}
 	private static boolean TCPconnection(){
+		String dir = System.getProperty("user.dir");
 		try {
-			Process p1 = Runtime.getRuntime().exec("C:\\Users\\BenzRST\\Desktop\\ADB36\\adb.exe reverse tcp:8005 tcp:7800");
+			Process p1 = Runtime.getRuntime().exec(dir+"\\adb.exe reverse tcp:8005 tcp:7800");
 			Scanner sc1 = new Scanner(p1.getErrorStream());
-			Process p = Runtime.getRuntime().exec("C:\\Users\\BenzRST\\Desktop\\ADB36\\adb.exe forward tcp:7801 tcp:8000");
+			Process p = Runtime.getRuntime().exec(dir+"\\adb.exe forward tcp:7801 tcp:8000");
 			Scanner sc = new Scanner(p.getErrorStream());
 			
 			if (sc.hasNext()) {
